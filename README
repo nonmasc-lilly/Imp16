@@ -1,0 +1,165 @@
+A simple 16bit imperative language, compiling to 16-bit 8086 Fasm assembly.
+
+                Language features
+
+Segments:
+
+        segment *<properties> <code> segend
+
+A segment simply states all of the build parameters for a block of code, these options are like so:
+        .at <addr>                      :: sets the origin of the segment to <addr>
+        .sizeof <size>                  :: sets the size of the segment (not including bytes added by the segment parameters)
+        .prefix <byte1 byte2 byte3 ...> :: prefixes the current segment (from origin) with all bytes which follow it
+        .suffix <byte1 byte2 byte3 ...> :: suffixes the current segment (from origin+sizeof-numofbytes) with all bytes which follow it
+        .entry <addr>                   :: if addr =/= origin then append `jmp near <addr>` or its equivalent to the .prefix.
+        .prepend_entry                  :: if included, re prepend the entry clause rather than append it.
+        .id <immediate>                 :: set the id of a segment to the immediate specified, defaults to zero, id controls name mangling of labels.
+
+Labels:
+
+       label <name> <code> end
+ 
+A label is simply a block of code which may be jumped to, a label does not return.
+
+Bind:
+
+        bind <name> : <register>
+
+We may bind names to registers for use in operations, the registers are as so:
+
+        low  accumulator (sizeof = byte) ; used in math operations
+        high accumulator (sizeof = byte) ; used in math operations
+             accumulator (sizeof = word) ; used in math operations
+        low  pointer     (sizeof = byte) ; used in address calculations
+        high pointer     (sizeof = byte) ; used in address calculations
+             pointer     (sizeof = word) ; used in address calculations
+        low  counter     (sizeof = byte) ; used in loops and shift operations
+        high counter     (sizeof = byte) ; used in loops and shift operations
+             counter     (sizeof = word) ; used in loops and shift operations
+        low  general     (sizeof = byte) ; entirely free for programmer use
+        high general     (sizeof = byte) ; entirely free for programmer use
+             general     (sizeof = word) ; entirely free for programmer use
+             source      (sizeof = word) ; used as the source operand of string operations
+             destination (sizeof = word) ; used as the destination operand of string operations
+             stack       (sizeof = word) ; used in stack operations
+             base        (sizeof = word) ; used in stack operations
+        seg  extra       (sizeof = word) ; free for programmer use when doing address calculations
+        seg  data        (sizeof = word) ; used in address calculations
+        seg  stack       (sizeof = word) ; used in stack calculations
+
+Note that just because a register is not available for programmer use does not mean the programmer
+cannot read and write to it, it simply means that the registers are volatile under various domains.
+Meaning that their value is not defined after certain operations.
+Registers which share a name overlap, low being the low order byte/word (see sizeof) and high is the
+high order. The exception to this is the `seg` type which states that the register specified is a
+segment register.
+
+Load:
+
+        load <name> := <immediate>
+
+Load simply does an immediate load into a bound variable.
+
+Interrupts:
+
+        int <immediate>
+
+We can initiate a software interrupt whose value is the immediate specified.
+
+Halt:
+        halt
+
+Halt ends the program by running an infinite loop.
+
+
+                Lexical elements
+
+Keyword         --> segment / segend / .at / .sizeof / .prefix / .suffix / .entry / label / end / bind /
+                    low / high / seg / accumulator / pointer / counter / general / source / destination /
+                    stack / base / extra / data / int / halt / load
+Punctuators     --> : / :=
+Name            --> (ALPHA / "_") *(ALPHA / DIGIT / "_")
+Immediate       --> *DIGIT / "$" *HEXDIG
+
+                Parsing
+
+Program                 --> Segment / Segment Program
+Segment                 --> Keyword(segment) SegmentParameters SegmentBlock
+SegmentParameters       --> Keyword(.at) Immediate / Keyword(.sizeof) Immediate / Keyword(.prefix) ImmediateList /
+                            Keyword(.suffix) ImmediateList / Keyword(.entry) Name
+ImmediateList           --> Immediate / Immediate ImmediateList
+SegmentBlock            --> PrimaryStatement SegmentBlock / Keyword(segend)
+PrimaryStatement        --> Label
+Label                   --> Keyword(label) Name Block
+Block                   --> Statement Block / Keyword(end)
+Statement               --> Bind / Int / Load / Keyword(halt)
+Bind                    --> Keyword(bind) Name Punctuator(:) Register
+Register                --> RegisterPrefix RegisterKind
+RegisterPrefix          --> Keyword(low) / Keyword(high) / Keyword(seg) / Null
+RegisterKind            --> Keyword(accumulator) / Keyword(pointer) / Keyword(counter) / Keyword(general) /
+                            Keyword(source) / Keyword(destination) / Keyword(stack) / Keyword(base) / Keyword(extra) /
+                            Keyword(data)
+Int                     --> Keyword(load) Immediate
+Load                    --> Keyword(load) Name Punctuator(:=) Immediate
+
+
+Where `Null` represents the empty string.
+
+
+        Parsing AST info
+
+Program                         --> *Segment
+Segment                         --> *_SegmentParameter SegmentBlock
+_SegmentParameter               ::= SPat / SPsize / SPentryLit / SPentryNamed / SPprefix / SPsuffix
+SPat[Immediate]
+SPsize[Immediate]
+SPentryLit[Immediate]
+SPentryNamed[String]
+SPprefix[Immediate List]
+SPsuffix[Immediate List]
+SegmentBlock                    --> *_PrimaryStatement
+_PrimaryStatement               ::= Label
+Label[String]                   --> Block
+Block                           --> *_Statement
+_Statement                      ::= Bind / Int / Load / Halt
+Bind                            --> Name Register
+Name[String]
+Register[Register]
+Int[Immediate]
+Load[String]                    --> Immediate
+Halt
+
+
+Notes on the syntax of the AST:
+
+        A name prefixed with `_` denotes that said name is not a real node, and rather stands in for its definition (`-->` is also replaced by `::=` in its
+        definition) this is named a `faint` identifier.
+        A non-faint identifier denotes an actual AST node.
+        A definition is defined like follows:
+
+                Def             --> Identifier Oclass Oexpr
+                Identifier      --> Uppercase *Lowercase
+                Oclass          --> "[" Class "]" / Null
+                Class           --> "Immediate" / "String" / "None" / "Register" / "Immediate List"
+                Oexpr           --> "-->" Expr / Null
+                Expr            --> Concat / Concat "/" Expr
+                Concat          --> Multiple / Multiple Multiple
+                Multiple        --> Grouping / "*" Grouping
+                Grouping        --> Token / "(" Expr ")"
+                Token           --> String / Identifier / TokenLiteral
+                String          --> """ *VisibleCharacters """
+                TokenLiteral    --> (Lower / Symbol) *VisibleCharacter
+
+        Identifiers which begin with an uppercase denote a class of tokens while that which does not is an actual token which may be found in the source
+        string.
+        A definition which does not have an expression is a terminal node.
+
+
+
+                        ====TODO====
+
+- Check sizes of immediate arguments during parsing (incorrect assembly files are really easy to generate at this stage)
+- Add .prepend_entry
+- Add .id
+- Check that name passed to load has previously been bound
+

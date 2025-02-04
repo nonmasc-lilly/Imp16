@@ -1,0 +1,21 @@
+segment .at $7C00
+        .sizeof $200
+        .suffix $55 $AA
+        .entry _start
+
+        label _start
+                bind a  :     accumulator
+                bind a0 : low accumulator
+                load a := $0E48
+                int $10
+                load a0 := $49
+                int $10
+                load a0 := $0A
+                int $10
+                load a0 := $0D
+                int $10
+                halt
+        end
+
+segend
+
