@@ -1,3 +1,4 @@
+\ Simple Comment \
 segment .at $7C00
         .sizeof $200
         .suffix $55 $AA

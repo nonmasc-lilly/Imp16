@@ -1,0 +1,23 @@
+\
+ASSEMBLY
+org 0x7C00
+jmp near _start
+
+_start:
+        mov ah, 0x0E
+        mov cx, word [msg]
+        lea si, [msg+2]
+.loop:
+        mov al, byte [si]
+        inc si
+        int 0x10
+        loop .loop
+        jmp $
+
+msg: dw 0x000D
+     db "Hello World", 0x0A, 0x0D
+
+times 510-($-$$) db 0x00
+dw 0xAA55
+\
+

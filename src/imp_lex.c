@@ -187,14 +187,14 @@ void imp_string_tokenize(IMP_TOKENS *restrict ret, const char *restrict string) 
         char *buffer;
         uint32_t i, buffer_padding, buffer_length, line;
         IMP_TOKEN_VALUE tmp_value;
-        IMP_TOKEN_TYPE tmp_type[2];
+        IMP_TOKEN_TYPE tmp_type[2] = {0};
         buffer = malloc(0x10);
         buffer_length  = 0;
         buffer_padding = 0x10;
         line = 0;
         for(i = 0; string[i]; i++) {
                 line += string[i] == '\n';
-                if(!isspace(string[i]) && !(tmp_type[0] = imp_token_chr_classify(string, &i))) {
+                if(!isspace(string[i]) && string[i] != '\\' && !(tmp_type[0] = imp_token_chr_classify(string, &i))) {
                         buffer_length += 1;
                         if(buffer_length >= buffer_padding) {
                                 buffer_padding += buffer_padding >> 1;
@@ -215,6 +215,7 @@ void imp_string_tokenize(IMP_TOKENS *restrict ret, const char *restrict string) 
                 }
                 if(tmp_type[0]) imp_tokens_append(ret, tmp_type[0], NULL, line);
                 tmp_type[0] = IMP_TOKEN_TYPE_NULL;
+                if(string[i] == '\\') {for(i++; string[i] && string[i] != '\\'; i++); if(string[i]) i++; }
         }
         free(buffer);
 }

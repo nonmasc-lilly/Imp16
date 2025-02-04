@@ -2,6 +2,12 @@ A simple 16bit imperative language, compiling to 16-bit 8086 Fasm assembly.
 
                 Language features
 
+Comments:
+
+        \ *<char> \
+
+Every token placed between instances of `\` is a comment.
+
 Segments:
 
         segment *<properties> <code> segend
