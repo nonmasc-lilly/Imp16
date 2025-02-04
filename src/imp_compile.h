@@ -49,6 +49,7 @@ typedef struct {
         uint16_t          nmspc;
         bool              has_prefix;
         bool              has_suffix;
+        bool              prepend_entry;
 } IMP_SEGMENT;
 typedef struct {
         IMP_SEGMENT *contents;
@@ -57,6 +58,7 @@ typedef struct {
 
 void imp_segment_create(IMP_SEGMENT *segment);
 void imp_segment_set_origin(IMP_SEGMENT *segment, IMP_NUMBER immediate_address);
+void imp_segment_set_namespace(IMP_SEGMENT *segment, IMP_NUMBER immediate_address);
 void imp_segment_set_size(IMP_SEGMENT *segment, IMP_NUMBER size);
 void imp_segment_prefix_append(IMP_SEGMENT *segment, IMP_NUMBER number);
 void imp_segment_suffix_append(IMP_SEGMENT *segment, IMP_NUMBER number);

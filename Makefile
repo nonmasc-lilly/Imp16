@@ -1,10 +1,11 @@
 ifeq ($(origin CC), default)
 CC = gcc
 endif
-LFLAGS ?= -flto -ffunction-sections -fdata-sections $(GFLAGS)
-GFLAGS ?=
-CFLAGS ?= -std=c99 -Wpedantic -ffunction-sections -fdata-sections -c $(GFLAGS)
-OFLAGS ?= -o
+LFLAGS   ?= -flto -ffunction-sections -fdata-sections $(GFLAGS)
+GFLAGS   ?=
+CFLAGS   ?= -std=c99 -Wpedantic -ffunction-sections -fdata-sections -c $(GFLAGS)
+OFLAGS   ?= -o
+TESTCASE ?= test/main.imp
 
 all: build/impc
 
@@ -32,8 +33,13 @@ build:
 clean: FORCE
 	rm build/*.o
 
+fclean: FORCE
+	rm build/*.o
+	rm test/*.asm
+	rm test/*.bin
+
 test: all FORCE
-	build/impc test/main.imp -o test/main.asm --debug
+	build/impc $(TESTCASE) -o test/main.asm --debug
 	fasm test/main.asm test/main.bin
 	qemu-system-x86_64 -drive file=test/main.bin,format=raw
 

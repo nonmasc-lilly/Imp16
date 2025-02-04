@@ -1,0 +1,24 @@
+segment
+        .at     $7C00
+        .sizeof $200
+        .suffix $55 $AA
+        .prefix $B8 $02 $00 $CD $10
+        .prepend_entry
+        .id $01
+        .entry _start
+
+label _start
+        bind a0 :  low accumulator
+        bind a  :  accumulator
+        load a  := $0E48
+        int $10
+        load a0 := $49
+        int $10
+        load a0 := $0A
+        int $10
+        load a0 := $0D
+        int $10
+        halt
+end
+
+segend

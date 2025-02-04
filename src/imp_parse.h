@@ -27,6 +27,8 @@ typedef enum {
         IMP_NODE_TYPE_HALT                              =       0x13,   /* value class = None           */
         IMP_NODE_TYPE_IMMEDIATE                         =       0x14,   /* value class = Immediate      */
         IMP_NODE_TYPE_NAME                              =       0x15,   /* value class = String         */
+        IMP_NODE_TYPE_SEGMENT_PARAMETER_PREPEND_ENTRY   =       0x16,   /* value class = None           */
+        IMP_NODE_TYPE_SEGMENT_PARAMETER_ID              =       0x17,   /* value class = Immediate      */
 
         IMP_NODE_TYPE__MAX
 } IMP_NODE_TYPE;

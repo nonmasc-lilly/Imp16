@@ -50,6 +50,12 @@ void imp_segment_create(IMP_SEGMENT *ret) {
 void imp_segment_set_origin(IMP_SEGMENT *ret, IMP_NUMBER immediate_address) {
         ret->origin = immediate_address;
 }
+void imp_segment_set_namespace(IMP_SEGMENT *ret, IMP_NUMBER immediate_address) {
+        ret->nmspc = immediate_address;
+}
+void imp_segment_set_prepend_entry(IMP_SEGMENT *ret) {
+        ret->prepend_entry = true;
+}
 void imp_segment_set_size(IMP_SEGMENT *ret, IMP_NUMBER size) {
         ret->size = size;
 }
@@ -135,21 +141,35 @@ bool imp_compile_segment(IMP_COMPILER_STATE *state) {
                 "org 0x%08X\n",
                 current_segment->origin
         );
+        if(current_segment->prepend_entry) {
+                if(current_segment->entry.named) {
+                        imp_byte_buffer_append_format(
+                                state->ret,
+                                strlen(current_segment->entry.content.name)+4,
+                                "jmp near %s@%04X\n",
+                                current_segment->entry.content.name,
+                                current_segment->nmspc
+                        );
+                } else imp_byte_buffer_append_format(state->ret, 8, "jmp near 0x%08x\n", current_segment->entry.content.immediate);
+        }
         if(current_segment->prefix.length) {
                 imp_byte_buffer_append_format(state->ret, 2, "db 0x%02X", current_segment->prefix.contents[0]);
                 for(i = 1; i < current_segment->prefix.length; i++)
                         imp_byte_buffer_append_format(state->ret, 2, ", 0x%02X", current_segment->prefix.contents[i]);
                 imp_byte_buffer_append_string(state->ret, "\n");
         }
-        if(current_segment->entry.named) {
-                imp_byte_buffer_append_format(
-                        state->ret,
-                        strlen(current_segment->entry.content.name)+4,
-                        "jmp near %s@%04X\n",
-                        current_segment->entry.content.name,
-                        current_segment->nmspc
-                );
-        } else imp_byte_buffer_append_format(state->ret, 8, "jmp near 0x%08x\n", current_segment->entry.content.immediate);
+        if(!current_segment->prepend_entry) {
+                if(current_segment->entry.named) {
+                        imp_byte_buffer_append_format(
+                                state->ret,
+                                strlen(current_segment->entry.content.name)+4,
+                                "jmp near %s@%04X\n",
+                                current_segment->entry.content.name,
+                                current_segment->nmspc
+                        );
+                } else imp_byte_buffer_append_format(state->ret, 8, "jmp near 0x%08x\n", current_segment->entry.content.immediate);
+        }
+        
         imp_compile_segment_block(state);
         imp_byte_buffer_append_format(
                 state->ret,
@@ -173,7 +193,9 @@ bool imp_compile_segment_parameter(IMP_COMPILER_STATE *state) {
         current_segment = state->segments.contents + state->segments.length - 1;
         switch(state->current->type) {
         case IMP_NODE_TYPE_SEGMENT_PARAMETER_AT:     imp_segment_set_origin(current_segment, state->current->value.number); return true;
+        case IMP_NODE_TYPE_SEGMENT_PARAMETER_ID:     imp_segment_set_namespace(current_segment, state->current->value.number); return true;
         case IMP_NODE_TYPE_SEGMENT_PARAMETER_SIZEOF: imp_segment_set_size(current_segment, state->current->value.number);   return true;
+        case IMP_NODE_TYPE_SEGMENT_PARAMETER_PREPEND_ENTRY: imp_segment_set_prepend_entry(current_segment);   return true;
         case IMP_NODE_TYPE_SEGMENT_PARAMETER_PREFIX:
                 for(i = 0; i < state->current->value.number_array.length; i++)
                         imp_segment_prefix_append(current_segment, state->current->value.number_array.contents[i]);

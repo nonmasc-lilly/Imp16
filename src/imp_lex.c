@@ -7,39 +7,41 @@
 #include <stdbool.h>
 #include "imp_lex.h"
 
-#define IMP_TOKEN_STR_CLASSIFY_UPDATED_TO 0x1F
+#define IMP_TOKEN_STR_CLASSIFY_UPDATED_TO 0x21
 IMP_TOKEN_TYPE imp_token_str_classify(const char *string) {
         char *eptr;
         bool isname;
         uint32_t i;
         assert(IMP_TOKEN_STR_CLASSIFY_UPDATED_TO == IMP_TOKEN_TYPE__MAX && "imp_token_str_classify has not been updated to the current token_type_max.");
         if(!*string) return IMP_TOKEN_TYPE_NULL;
-        else if(!strcmp(string,         ".at")) return         IMP_TOKEN_TYPE_DAT;
-        else if(!strcmp(string,         "end")) return         IMP_TOKEN_TYPE_END;
-        else if(!strcmp(string,         "int")) return         IMP_TOKEN_TYPE_INT;
-        else if(!strcmp(string,         "low")) return         IMP_TOKEN_TYPE_LOW;
-        else if(!strcmp(string,         "seg")) return         IMP_TOKEN_TYPE_SEG;
-        else if(!strcmp(string,        "base")) return        IMP_TOKEN_TYPE_BASE;
-        else if(!strcmp(string,        "bind")) return        IMP_TOKEN_TYPE_BIND;
-        else if(!strcmp(string,        "data")) return        IMP_TOKEN_TYPE_DATA;
-        else if(!strcmp(string,        "halt")) return        IMP_TOKEN_TYPE_HALT;
-        else if(!strcmp(string,        "high")) return        IMP_TOKEN_TYPE_HIGH;
-        else if(!strcmp(string,        "load")) return        IMP_TOKEN_TYPE_LOAD;
-        else if(!strcmp(string,       "extra")) return       IMP_TOKEN_TYPE_EXTRA;
-        else if(!strcmp(string,       "label")) return       IMP_TOKEN_TYPE_LABEL;
-        else if(!strcmp(string,       "stack")) return       IMP_TOKEN_TYPE_STACK;
-        else if(!strcmp(string,      ".entry")) return      IMP_TOKEN_TYPE_DENTRY;
-        else if(!strcmp(string,      "segend")) return      IMP_TOKEN_TYPE_SEGEND;
-        else if(!strcmp(string,      "source")) return      IMP_TOKEN_TYPE_SOURCE;
-        else if(!strcmp(string,     ".prefix")) return     IMP_TOKEN_TYPE_DPREFIX;
-        else if(!strcmp(string,     ".sizeof")) return     IMP_TOKEN_TYPE_DSIZEOF;
-        else if(!strcmp(string,     ".suffix")) return     IMP_TOKEN_TYPE_DSUFFIX;
-        else if(!strcmp(string,     "counter")) return     IMP_TOKEN_TYPE_COUNTER;
-        else if(!strcmp(string,     "general")) return     IMP_TOKEN_TYPE_GENERAL;
-        else if(!strcmp(string,     "pointer")) return     IMP_TOKEN_TYPE_POINTER;
-        else if(!strcmp(string,     "segment")) return     IMP_TOKEN_TYPE_SEGMENT;
-        else if(!strcmp(string, "accumulator")) return IMP_TOKEN_TYPE_ACCUMULATOR;
-        else if(!strcmp(string, "destination")) return IMP_TOKEN_TYPE_DESTINATION;
+        else if(!strcmp(string,         ".at"))    return            IMP_TOKEN_TYPE_DAT;
+        else if(!strcmp(string,         ".id"))    return            IMP_TOKEN_TYPE_DID;
+        else if(!strcmp(string,         "end"))    return            IMP_TOKEN_TYPE_END;
+        else if(!strcmp(string,         "int"))    return            IMP_TOKEN_TYPE_INT;
+        else if(!strcmp(string,         "low"))    return            IMP_TOKEN_TYPE_LOW;
+        else if(!strcmp(string,         "seg"))    return            IMP_TOKEN_TYPE_SEG;
+        else if(!strcmp(string,        "base"))    return           IMP_TOKEN_TYPE_BASE;
+        else if(!strcmp(string,        "bind"))    return           IMP_TOKEN_TYPE_BIND;
+        else if(!strcmp(string,        "data"))    return           IMP_TOKEN_TYPE_DATA;
+        else if(!strcmp(string,        "halt"))    return           IMP_TOKEN_TYPE_HALT;
+        else if(!strcmp(string,        "high"))    return           IMP_TOKEN_TYPE_HIGH;
+        else if(!strcmp(string,        "load"))    return           IMP_TOKEN_TYPE_LOAD;
+        else if(!strcmp(string,       "extra"))    return          IMP_TOKEN_TYPE_EXTRA;
+        else if(!strcmp(string,       "label"))    return          IMP_TOKEN_TYPE_LABEL;
+        else if(!strcmp(string,       "stack"))    return          IMP_TOKEN_TYPE_STACK;
+        else if(!strcmp(string,      ".entry"))    return         IMP_TOKEN_TYPE_DENTRY;
+        else if(!strcmp(string,      "segend"))    return         IMP_TOKEN_TYPE_SEGEND;
+        else if(!strcmp(string,      "source"))    return         IMP_TOKEN_TYPE_SOURCE;
+        else if(!strcmp(string,     ".prefix"))    return        IMP_TOKEN_TYPE_DPREFIX;
+        else if(!strcmp(string,     ".sizeof"))    return        IMP_TOKEN_TYPE_DSIZEOF;
+        else if(!strcmp(string,     ".suffix"))    return        IMP_TOKEN_TYPE_DSUFFIX;
+        else if(!strcmp(string,     "counter"))    return        IMP_TOKEN_TYPE_COUNTER;
+        else if(!strcmp(string,     "general"))    return        IMP_TOKEN_TYPE_GENERAL;
+        else if(!strcmp(string,     "pointer"))    return        IMP_TOKEN_TYPE_POINTER;
+        else if(!strcmp(string,     "segment"))    return        IMP_TOKEN_TYPE_SEGMENT;
+        else if(!strcmp(string, "accumulator"))    return    IMP_TOKEN_TYPE_ACCUMULATOR;
+        else if(!strcmp(string, "destination"))    return    IMP_TOKEN_TYPE_DESTINATION;
+        else if(!strcmp(string, ".prepend_entry")) return IMP_TOKEN_TYPE_DPREPEND_ENTRY;
         if(sizeof(unsigned long) == sizeof(uint64_t)) {
                 if(string[0] == '-') {
                         if(string[1] == '$') strtoul(string + 2, &eptr, 0x10);
@@ -64,7 +66,7 @@ IMP_TOKEN_TYPE imp_token_str_classify(const char *string) {
 
         return isname ? IMP_TOKEN_TYPE_NAME : IMP_TOKEN_TYPE_NULL;
 }
-#define IMP_TOKEN_CHR_CLASSIFY_UPDATED_TO 0x1F
+#define IMP_TOKEN_CHR_CLASSIFY_UPDATED_TO 0x21
 IMP_TOKEN_TYPE imp_token_chr_classify(const char *restrict source, uint32_t *restrict index) {
         assert(IMP_TOKEN_CHR_CLASSIFY_UPDATED_TO == IMP_TOKEN_TYPE__MAX && "imp_token_chr_classify has not been updated to the current token_type_max.");
         switch(source[*index]) {
@@ -77,7 +79,7 @@ IMP_TOKEN_TYPE imp_token_chr_classify(const char *restrict source, uint32_t *res
         }
 }
 
-#define IMP_TOKEN_STR_EVALUATE_UPDATED_TO 0x1F
+#define IMP_TOKEN_STR_EVALUATE_UPDATED_TO 0x21
 void imp_token_str_evaluate(IMP_TOKEN_VALUE *restrict ret, const char *restrict string) {
         uint64_t value;
         char    *eptr;
@@ -123,7 +125,7 @@ void imp_tokens_create(IMP_TOKENS *ret) {
         ret->values = malloc(1);
         ret->length = 0;
 }
-#define IMP_TOKENS_DESTROY_UPDATED_TO 0x1F
+#define IMP_TOKENS_DESTROY_UPDATED_TO 0x21
 void imp_tokens_destroy(IMP_TOKENS *ret) {
         uint32_t i;
         assert(IMP_TOKENS_DESTROY_UPDATED_TO == IMP_TOKEN_TYPE__MAX && "imp_tokens_destroy has not been updated to the current token_type_max.");
@@ -154,26 +156,26 @@ void imp_tokens_append(IMP_TOKENS *restrict ret, IMP_TOKEN_TYPE type, const IMP_
         default: ret->values[ret->length - 1].string = NULL; break;
         } else ret->values[ret->length - 1].string = NULL;
 }
-#define IMP_TOKENS_PRINT_UPDATED_TO 0x1F
+#define IMP_TOKENS_PRINT_UPDATED_TO 0x21
 void imp_tokens_print(const IMP_TOKENS *tokens) {
         uint32_t i;
         static const char *token_type_repr[IMP_TOKEN_TYPE__MAX] = {
-                "NULL",         "segment",      "segend",
-                ".at",          ".sizeof",      ".prefix",
-                ".suffix",      ".entry",       "label",
-                "end",          "bind",         "low",
-                "high",         "seg",          "accumulator",
-                "pointer",      "counter",      "general",
-                "source",       "destination",  "stack",
-                "base",         "extra",        "data",
-                "int",          "halt",         ":",
-                ":=",           "<name>",       "<immediate>",
-                "load"
+                "NULL",         "segment",              "segend",
+                ".at",          ".sizeof",              ".prefix",
+                ".suffix",      ".entry",               "label",
+                "end",          "bind",                 "low",
+                "high",         "seg",                  "accumulator",
+                "pointer",      "counter",              "general",
+                "source",       "destination",          "stack",
+                "base",         "extra",                "data",
+                "int",          "halt",                 ":",
+                ":=",           "<name>",               "<immediate>",
+                "load",         ".prepend_entry",       ".id"
         };
         assert(IMP_TOKENS_PRINT_UPDATED_TO == IMP_TOKEN_TYPE__MAX && "imp_tokens_print has not been updated to the current token_type_max");
         fputs("\033[90m", stderr);
         for(i = 0; i < tokens->length; i++) {
-                fprintf(stderr, "%010d||[line: %u]  %15s :: ", i, tokens->lines[i], token_type_repr[tokens->types[i]]);
+                fprintf(stderr, "%010d||[line: %10u]  %15s :: ", i, tokens->lines[i], token_type_repr[tokens->types[i]]);
                 if(tokens->types[i] == IMP_TOKEN_TYPE_NAME) fprintf(stderr, "%15s\n", tokens->values[i].string);
                 else if(tokens->types[i] == IMP_TOKEN_TYPE_IMMEDIATE) fprintf(stderr, "$%014x\n", tokens->values[i].number);
                 else fprintf(stderr, "%15s\n", " ");

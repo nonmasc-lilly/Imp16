@@ -26,6 +26,7 @@ IMP_NODE *imp_node_create(IMP_NODE *parent, IMP_NODE_TYPE type, IMP_NODE_VALUE *
         case IMP_NODE_TYPE_SEGMENT_PARAMETER_AT:
         case IMP_NODE_TYPE_SEGMENT_PARAMETER_SIZEOF:
         case IMP_NODE_TYPE_SEGMENT_PARAMETER_ENTRY_LITERAL:
+        case IMP_NODE_TYPE_SEGMENT_PARAMETER_ID:
         case IMP_NODE_TYPE_INTERRUPT:
                 memcpy(&ret->value, value, sizeof(*value));
                 break;
@@ -79,7 +80,7 @@ void imp_node_print(const IMP_NODE *tree, uint32_t index) {
                 "label",                "block",                        "statement",
                 "bind",                 "register",                     "interrupt",
                 "load",                 "halt",                         "immediate",
-                "name"
+                "name",                 "segment .prepend_entry",       "segment .id"
         };
         fprintf(stderr, "\033[0;90m");
         for(i = 0; i < index; i++) fprintf(stderr, "|");
@@ -106,6 +107,7 @@ void imp_node_print(const IMP_NODE *tree, uint32_t index) {
                 }
                 break;
         case IMP_NODE_TYPE_IMMEDIATE:
+        case IMP_NODE_TYPE_SEGMENT_PARAMETER_ID:
         case IMP_NODE_TYPE_SEGMENT_PARAMETER_AT:
         case IMP_NODE_TYPE_SEGMENT_PARAMETER_SIZEOF:
         case IMP_NODE_TYPE_SEGMENT_PARAMETER_ENTRY_LITERAL:
@@ -150,7 +152,7 @@ void imp_assert(bool condition, bool error, uint32_t line, const char *message, 
                 va_end(args);
                 exit(1);
         }
-        fprintf(stderr, "\033[1;33mWardning (\033[0;33mon line %u)\033[1;31m:\033[m ", line);
+        fprintf(stderr, "\033[1;33mWarning (\033[0;33mon line %u)\033[1;31m:\033[m ", line);
         vfprintf(stderr, message, args);
         fprintf(stderr, "\n");
         va_end(args);
@@ -198,6 +200,7 @@ bool imp_parse_segment_parameter(IMP_PARSE_STATE *state) {
                 consume_token(state);
                 imp_assert(get_token_type(state) == IMP_TOKEN_TYPE_IMMEDIATE, true, get_token_line(state), "Expected immediate after `.at`.");
                 value.number = get_token_numeric_value(state);
+                imp_assert(value.number < 0x100000, false, get_token_line(state), "Immediate of .at is larger than 20 bits.");
                 imp_node_create(state->current, IMP_NODE_TYPE_SEGMENT_PARAMETER_AT, &value);
                 consume_token(state);
                 return true;
@@ -219,6 +222,7 @@ bool imp_parse_segment_parameter(IMP_PARSE_STATE *state) {
                                 ++value.number_array.length * sizeof(*value.number_array.contents)
                         );
                         value.number_array.contents[value.number_array.length - 1] = get_token_numeric_value(state);
+                        imp_assert(get_token_numeric_value(state) < 0x100, false, get_token_line(state), "Immediate byte in .prefix is larger than 8 bits.");
                         consume_token(state);
                 }
                 imp_node_create(state->current, IMP_NODE_TYPE_SEGMENT_PARAMETER_PREFIX, &value);
@@ -235,6 +239,7 @@ bool imp_parse_segment_parameter(IMP_PARSE_STATE *state) {
                                 ++value.number_array.length * sizeof(*value.number_array.contents)
                         );
                         value.number_array.contents[value.number_array.length - 1] = get_token_numeric_value(state);
+                        imp_assert(get_token_numeric_value(state) < 0x100, false, get_token_line(state), "Immediate byte in .suffix is larger than 8 bits.");
                         consume_token(state);
                 }
                 imp_node_create(state->current, IMP_NODE_TYPE_SEGMENT_PARAMETER_SUFFIX, &value);
@@ -250,11 +255,23 @@ bool imp_parse_segment_parameter(IMP_PARSE_STATE *state) {
                 );
                 if(get_token_type(state) == IMP_TOKEN_TYPE_IMMEDIATE) {
                         value.number = get_token_numeric_value(state);
+                        imp_assert(value.number < 0x100000, false, get_token_line(state), "Immediate of .entry is larger than 20 bits.");
                         imp_node_create(state->current, IMP_NODE_TYPE_SEGMENT_PARAMETER_ENTRY_LITERAL, &value);
                 } else if(get_token_type(state) == IMP_TOKEN_TYPE_NAME) {
                         value.string = (char*)get_token_string_value(state);
                         imp_node_create(state->current, IMP_NODE_TYPE_SEGMENT_PARAMETER_ENTRY_NAMED, &value);
                 }
+                consume_token(state);
+                return true;
+        case IMP_TOKEN_TYPE_DPREPEND_ENTRY:
+                consume_token(state);
+                imp_node_create(state->current, IMP_NODE_TYPE_SEGMENT_PARAMETER_PREPEND_ENTRY, NULL);
+                return true;
+        case IMP_TOKEN_TYPE_DID:
+                consume_token(state);
+                imp_assert(get_token_type(state) == IMP_TOKEN_TYPE_IMMEDIATE, true, get_token_line(state), "Expected immediate after `.id`.");
+                value.number = get_token_numeric_value(state);
+                imp_node_create(state->current, IMP_NODE_TYPE_SEGMENT_PARAMETER_ID, &value);
                 consume_token(state);
                 return true;
         default: return false;
@@ -321,6 +338,7 @@ bool imp_parse_int(IMP_PARSE_STATE *state) {
         consume_token(state);
         imp_assert(get_token_type(state) == IMP_TOKEN_TYPE_IMMEDIATE, true, get_token_line(state), "Expected interrupt number.");
         value.number = get_token_numeric_value(state);
+        imp_assert(value.number < 0x100, false, get_token_line(state), "Immediate of int is larger than 8 bits.");
         imp_node_create(state->current, IMP_NODE_TYPE_INTERRUPT, &value);
         consume_token(state);
         return true;
@@ -338,6 +356,7 @@ bool imp_parse_load(IMP_PARSE_STATE *state) {
         consume_token(state);
         imp_assert(get_token_type(state) == IMP_TOKEN_TYPE_IMMEDIATE, true, get_token_line(state), "Expected immediate with which to load.");
         value.number = get_token_numeric_value(state);
+        /* TODO: keep track of bound registers and the immediate size given to them */
         imp_node_create(load_node, IMP_NODE_TYPE_IMMEDIATE, &value);
         consume_token(state);
         return true;

@@ -1,3 +1,3 @@
 build/
-test/main.asm
-test/main.bin
+test/*.asm
+test/*.bin

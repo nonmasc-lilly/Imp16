@@ -34,6 +34,8 @@ typedef enum {
         IMP_TOKEN_TYPE_NAME             =       0x1C,
         IMP_TOKEN_TYPE_IMMEDIATE        =       0x1D,
         IMP_TOKEN_TYPE_LOAD             =       0x1E,
+        IMP_TOKEN_TYPE_DPREPEND_ENTRY   =       0x1F,
+        IMP_TOKEN_TYPE_DID              =       0x20,
 
         IMP_TOKEN_TYPE__MAX
 } IMP_TOKEN_TYPE;

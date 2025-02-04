@@ -13,7 +13,8 @@ A segment simply states all of the build parameters for a block of code, these o
         .suffix <byte1 byte2 byte3 ...> :: suffixes the current segment (from origin+sizeof-numofbytes) with all bytes which follow it
         .entry <addr>                   :: if addr =/= origin then append `jmp near <addr>` or its equivalent to the .prefix.
         .prepend_entry                  :: if included, re prepend the entry clause rather than append it.
-        .id <immediate>                 :: set the id of a segment to the immediate specified, defaults to zero, id controls name mangling of labels.
+        .id <immediate>                 :: set the id of a segment to the immediate specified, defaults to zero, id controls name mangling of labels,
+                                           there are 0xFFFF id's.
 
 Labels:
 
@@ -76,7 +77,7 @@ Halt ends the program by running an infinite loop.
 
 Keyword         --> segment / segend / .at / .sizeof / .prefix / .suffix / .entry / label / end / bind /
                     low / high / seg / accumulator / pointer / counter / general / source / destination /
-                    stack / base / extra / data / int / halt / load
+                    stack / base / extra / data / int / halt / load / .prefix_entry, .id
 Punctuators     --> : / :=
 Name            --> (ALPHA / "_") *(ALPHA / DIGIT / "_")
 Immediate       --> *DIGIT / "$" *HEXDIG
@@ -86,7 +87,8 @@ Immediate       --> *DIGIT / "$" *HEXDIG
 Program                 --> Segment / Segment Program
 Segment                 --> Keyword(segment) SegmentParameters SegmentBlock
 SegmentParameters       --> Keyword(.at) Immediate / Keyword(.sizeof) Immediate / Keyword(.prefix) ImmediateList /
-                            Keyword(.suffix) ImmediateList / Keyword(.entry) Name
+                            Keyword(.suffix) ImmediateList / Keyword(.entry) Name / Keyword(.prefix_entry) /
+                            Keyword(.id) Immediate
 ImmediateList           --> Immediate / Immediate ImmediateList
 SegmentBlock            --> PrimaryStatement SegmentBlock / Keyword(segend)
 PrimaryStatement        --> Label
@@ -110,13 +112,15 @@ Where `Null` represents the empty string.
 
 Program                         --> *Segment
 Segment                         --> *_SegmentParameter SegmentBlock
-_SegmentParameter               ::= SPat / SPsize / SPentryLit / SPentryNamed / SPprefix / SPsuffix
+_SegmentParameter               ::= SPat / SPsize / SPentryLit / SPentryNamed / SPprefix / SPsuffix / SPprefixEntry / SPid
 SPat[Immediate]
 SPsize[Immediate]
 SPentryLit[Immediate]
 SPentryNamed[String]
 SPprefix[Immediate List]
 SPsuffix[Immediate List]
+SPprefixEntry
+SPid[Immediate]
 SegmentBlock                    --> *_PrimaryStatement
 _PrimaryStatement               ::= Label
 Label[String]                   --> Block
@@ -158,8 +162,5 @@ Notes on the syntax of the AST:
 
                         ====TODO====
 
-- Check sizes of immediate arguments during parsing (incorrect assembly files are really easy to generate at this stage)
-- Add .prepend_entry
-- Add .id
-- Check that name passed to load has previously been bound
+- Check that name passed to load has previously been bound and the immediate in reference to said register
 
